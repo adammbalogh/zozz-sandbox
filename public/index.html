@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Belépés — zozz-sandbox</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>Belépés</h1>
+    <form id="login-form" novalidate>
+      <label>E-mail cím <input name="email" type="email" autocomplete="username" required></label>
+      <label>Jelszó <input name="password" type="password" autocomplete="current-password" required></label>
+      <button id="login-button" type="submit">Belépés</button>
+      <span id="spinner" hidden>Belépés folyamatban…</span>
+      <p id="error" role="alert" hidden></p>
+    </form>
+  </main>
+  <script type="module" src="/login.js"></script>
+</body>
+</html>
