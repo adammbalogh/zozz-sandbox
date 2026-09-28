@@ -1,4 +1,4 @@
-import { ERROR_MESSAGE, requestToken } from './login-client.js';
+import { ERROR_MESSAGE, lockedMessage, requestLogin } from './login-client.js';
 
 const form = document.querySelector('#login-form');
 const button = document.querySelector('#login-button');
@@ -14,9 +14,9 @@ async function onLoginPress(event) {
   spinner.hidden = false;
   error.hidden = true;
 
-  const token = await requestToken(email, password);
+  const { token, retryAfter } = await requestLogin(email, password);
   if (!token) {
-    error.textContent = ERROR_MESSAGE;
+    error.textContent = retryAfter ? lockedMessage(retryAfter) : ERROR_MESSAGE;
     error.hidden = false;
     button.disabled = false;
     spinner.hidden = true;
