@@ -1,9 +1,15 @@
-import { ERROR_MESSAGE, requestToken } from './login-client.js';
+import { ERROR_MESSAGE, loadSession, requestToken, saveSession } from './login-client.js';
 
 const form = document.querySelector('#login-form');
 const button = document.querySelector('#login-button');
 const spinner = document.querySelector('#spinner');
 const error = document.querySelector('#error');
+const stores = { local: localStorage, session: sessionStorage };
+
+// Already logged in (in this tab, or remembered): go straight to the home page.
+if (loadSession(stores)) {
+  window.location.replace('/home.html');
+}
 
 async function onLoginPress(event) {
   event.preventDefault();
@@ -23,8 +29,9 @@ async function onLoginPress(event) {
     return;
   }
 
-  sessionStorage.setItem('token', token);
-  window.location.href = '/home.html';
+  saveSession(stores, token, form.elements.remember.checked);
+  // replace(): the login page does not stay in the history, so Back cannot show it with the button disabled.
+  window.location.replace('/home.html');
 }
 
 form.addEventListener('submit', onLoginPress);

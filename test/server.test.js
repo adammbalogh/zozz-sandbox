@@ -37,3 +37,23 @@ test('serves the login page and refuses paths outside public/', async () => {
   assert.match(await page.text(), /<h1>Belépés<\/h1>/);
   assert.equal((await fetch(`${base}/..%2Fserver.js`)).status, 403);
 });
+
+test('the login page offers "Maradjak bejelentkezve", never pre-checked', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  const checkbox = html.match(/<input[^>]*name="remember"[^>]*>/)?.[0];
+
+  assert.ok(checkbox, 'remember checkbox is missing');
+  assert.match(checkbox, /type="checkbox"/);
+  assert.match(checkbox, /autocomplete="off"/);
+  assert.doesNotMatch(checkbox, /\bchecked\b/);
+  assert.match(html, /Maradjak bejelentkezve/);
+  assert.match(html, /Közös vagy nyilvános gépen nem ajánlott\./);
+});
+
+test('the home page has a logout button and checks the login', async () => {
+  const html = await (await fetch(`${base}/home.html`)).text();
+
+  assert.match(html, /Kijelentkezés/);
+  assert.match(html, /<script type="module" src="\/home\.js"><\/script>/);
+  assert.equal((await fetch(`${base}/home.js`)).headers.get('content-type'), 'text/javascript; charset=utf-8');
+});
