@@ -16,3 +16,8 @@ button:disabled { opacity: .6; }
 /* Edge's own reveal button would be a second, unsynchronised toggle. */
 ::-ms-reveal { display: none; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+#forgot-password { margin-top: -.5rem; font-size: .9rem; }
+#forgot-password summary { width: fit-content; list-style: none; color: #0066cc; text-decoration: underline; cursor: pointer; }
+#forgot-password summary::-webkit-details-marker { display: none; }
+#forgot-password p { margin: .5rem 0 0; }
+#forgot-password a { color: #0066cc; }
