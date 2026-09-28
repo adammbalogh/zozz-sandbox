@@ -1,4 +1,4 @@
-import { ERROR_MESSAGE, buildLoginRequest, readToken } from './login-client.js';
+import { requestLogin } from './login-client.js';
 
 const form = document.querySelector('#login-form');
 const button = document.querySelector('#login-button');
@@ -10,23 +10,21 @@ async function onLoginPress(event) {
   const email = form.elements.email.value;
   const password = form.elements.password.value;
 
-  const response = await fetch('/api/login', buildLoginRequest(email, password));
-  const body = await response.json();
-  const token = readToken(body);
-
   button.disabled = true;
   spinner.hidden = false;
   error.hidden = true;
 
-  if (!response.ok || !token) {
-    error.textContent = ERROR_MESSAGE;
+  const result = await requestLogin(email, password);
+
+  if (result.error) {
+    error.textContent = result.error;
     error.hidden = false;
     button.disabled = false;
     spinner.hidden = true;
     return;
   }
 
-  sessionStorage.setItem('token', token);
+  sessionStorage.setItem('token', result.token);
   window.location.href = '/home.html';
 }
 
