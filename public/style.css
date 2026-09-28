@@ -6,3 +6,7 @@ input { padding: .6rem; font-size: 1rem; border: 1px solid #c7c7cc; border-radiu
 button { padding: .7rem; font-size: 1rem; border: 0; border-radius: 8px; background: #0a84ff; color: #fff; }
 button:disabled { opacity: .6; }
 #error { color: #d70015; margin: 0; }
+.remember { display: grid; gap: .25rem; }
+.remember small { color: #6e6e73; font-size: .8rem; }
+.checkbox { display: flex; align-items: center; gap: .5rem; }
+.checkbox input { padding: 0; }

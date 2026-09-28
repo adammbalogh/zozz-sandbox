@@ -12,6 +12,10 @@
     <form id="login-form" novalidate>
       <label>E-mail cím <input name="email" type="email" autocomplete="username" required></label>
       <label>Jelszó <input name="password" type="password" autocomplete="current-password" required></label>
+      <div class="remember">
+        <label class="checkbox"><input name="remember" type="checkbox" autocomplete="off" aria-describedby="remember-hint"> Maradjak bejelentkezve</label>
+        <small id="remember-hint">Közös vagy nyilvános gépen nem ajánlott.</small>
+      </div>
       <button id="login-button" type="submit">Belépés</button>
       <span id="spinner" hidden>Belépés folyamatban…</span>
       <p id="error" role="alert" hidden></p>
