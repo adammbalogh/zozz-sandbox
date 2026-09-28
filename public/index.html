@@ -11,7 +11,12 @@
     <h1>Belépés</h1>
     <form id="login-form" novalidate>
       <label>E-mail cím <input name="email" type="email" autocomplete="username" required></label>
-      <label>Jelszó <input name="password" type="password" autocomplete="current-password" required></label>
+      <div class="password-field">
+        <label>Jelszó <input id="password" name="password" type="password" autocomplete="current-password" required
+          spellcheck="false" autocapitalize="none" autocorrect="off"></label>
+        <button id="password-toggle" type="button" aria-controls="password">Mutat</button>
+        <span id="password-status" class="visually-hidden" aria-live="polite"></span>
+      </div>
       <button id="login-button" type="submit">Belépés</button>
       <span id="spinner" hidden>Belépés folyamatban…</span>
       <p id="error" role="alert" hidden></p>

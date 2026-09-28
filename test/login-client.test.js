@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../server.js';
-import { readToken, requestToken } from '../public/login-client.js';
+import { nextRevealLock, passwordToggleView, readToken, requestToken } from '../public/login-client.js';
 
 let server;
 let base;
@@ -41,4 +41,28 @@ test('requestToken returns null instead of rejecting on a network error or a bro
   assert.equal(await requestToken('demo@example.com', 'demo1234', offline), null);
   assert.equal(await requestToken('demo@example.com', 'demo1234', notJson), null);
   assert.equal(await requestToken('demo@example.com', 'demo1234', noToken), null);
+});
+
+test('passwordToggleView describes the hidden and the visible password', () => {
+  assert.deepEqual(passwordToggleView(false), {
+    inputType: 'password',
+    buttonText: 'Mutat',
+    announcement: 'A jelszó el van rejtve.',
+  });
+  assert.deepEqual(passwordToggleView(true), {
+    inputType: 'text',
+    buttonText: 'Elrejt',
+    announcement: 'A jelszó látható.',
+  });
+});
+
+test('nextRevealLock locks revealing a password filled in by the browser until the field is emptied', () => {
+  // Typed by the user.
+  assert.equal(nextRevealLock(false, { autofilled: false, empty: false }), false);
+  // Filled in by the browser; Chrome may still report the value as empty.
+  assert.equal(nextRevealLock(false, { autofilled: true, empty: true }), true);
+  // The saved password was edited, so it is no longer :autofill.
+  assert.equal(nextRevealLock(true, { autofilled: false, empty: false }), true);
+  // Emptied, then typed by hand.
+  assert.equal(nextRevealLock(true, { autofilled: false, empty: true }), false);
 });

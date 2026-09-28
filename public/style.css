@@ -6,3 +6,13 @@ input { padding: .6rem; font-size: 1rem; border: 1px solid #c7c7cc; border-radiu
 button { padding: .7rem; font-size: 1rem; border: 0; border-radius: 8px; background: #0a84ff; color: #fff; }
 button:disabled { opacity: .6; }
 #error { color: #d70015; margin: 0; }
+.password-field { display: flex; align-items: flex-end; gap: .5rem; }
+.password-field label { flex: 1; min-width: 0; }
+.password-field input { min-width: 0; }
+#password-toggle { flex: none; min-width: 4.75rem; padding: .6rem; border: 1px solid #c7c7cc; background: #fff; color: #0a84ff; }
+/* A password filled in by the browser cannot be revealed; the rules are separate, an unknown selector drops the whole rule. */
+.password-field:has(input:autofill) #password-toggle { display: none; }
+.password-field:has(input:-webkit-autofill) #password-toggle { display: none; }
+/* Edge's own reveal button would be a second, unsynchronised toggle. */
+::-ms-reveal { display: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

@@ -32,3 +32,19 @@ export async function requestToken(email, password, fetchImpl = fetch) {
     return null;
   }
 }
+
+/** What the password field and its show/hide button look like while the password is visible or hidden. */
+export function passwordToggleView(visible) {
+  return visible
+    ? { inputType: 'text', buttonText: 'Elrejt', announcement: 'A jelszó látható.' }
+    : { inputType: 'password', buttonText: 'Mutat', announcement: 'A jelszó el van rejtve.' };
+}
+
+/**
+ * Whether revealing the password is locked: a password filled in by the browser must not be revealed,
+ * even after it has been edited, until the field is emptied and the password is typed by hand.
+ * `autofilled` wins, because Chrome reports an autofilled value as empty until the first user interaction.
+ */
+export function nextRevealLock(locked, { autofilled, empty }) {
+  return autofilled || (locked && !empty);
+}
