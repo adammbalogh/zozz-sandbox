@@ -2,14 +2,20 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkCredentials, issueToken } from './src/auth.js';
+import { checkCredentials, issueToken, normalizeEmail } from './src/auth.js';
+import { createLockout } from './src/lockout.js';
 
 const PUBLIC_DIR = fileURLToPath(new URL('./public/', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 
-function sendJson(res, status, body) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+function sendJson(res, status, body, headers = {}) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...headers });
   res.end(JSON.stringify(body));
+}
+
+function sendLocked(res, ms) {
+  const retryAfter = Math.ceil(ms / 1000);
+  return sendJson(res, 429, { error: 'too_many_attempts', retryAfter }, { 'Retry-After': String(retryAfter) });
 }
 
 async function readJson(req) {
@@ -18,21 +24,35 @@ async function readJson(req) {
     raw += chunk;
   }
 
-  return JSON.parse(raw || '{}');
+  const body = JSON.parse(raw || '{}');
+  if (typeof body !== 'object' || body === null) {
+    throw new SyntaxError('The request body is not a JSON object');
+  }
+  return body;
 }
 
-async function handleLogin(req, res) {
+async function handleLogin(req, res, lockout) {
   let body;
   try {
     body = await readJson(req);
   } catch {
     return sendJson(res, 400, { error: 'invalid_json' });
   }
+  // No await from here on: checking and recording a failure cannot interleave with a parallel
+  // request, so parallel guesses cannot slip past the limit. Keep it so if checkCredentials turns async.
+  // Unknown e-mails are counted and locked just like known ones, so the answers never reveal an account.
+  const email = typeof body.email === 'string' ? normalizeEmail(body.email) : '';
+  const remaining = lockout.remainingLock(email);
+  if (remaining > 0) {
+    return sendLocked(res, remaining);
+  }
   const user = checkCredentials(body.email, body.password);
   if (!user) {
-    return sendJson(res, 401, { error: 'invalid_credentials' });
+    const locked = lockout.recordFailure(email);
+    return locked > 0 ? sendLocked(res, locked) : sendJson(res, 401, { error: 'invalid_credentials' });
   }
 
+  lockout.reset(email);
   return sendJson(res, 200, { token: issueToken(), user });
 }
 
@@ -58,10 +78,10 @@ async function serveStatic(req, res) {
   }
 }
 
-export function createApp() {
+export function createApp({ lockout = createLockout() } = {}) {
   return createServer((req, res) => {
     if (req.method === 'POST' && req.url === '/api/login') {
-      return handleLogin(req, res);
+      return handleLogin(req, res, lockout);
     }
     if (req.method === 'GET') {
       return serveStatic(req, res);
