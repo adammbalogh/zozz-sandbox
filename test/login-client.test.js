@@ -14,6 +14,9 @@ before(async () => {
 
 after(() => server.close());
 
+// The page calls fetch with a relative URL; in Node it has to be made absolute.
+const serverFetch = (path, init) => fetch(`${base}${path}`, init);
+
 function fakeFetch(status, body) {
   return async () => ({
     ok: status >= 200 && status < 300,
@@ -35,6 +38,16 @@ test('the client reads a token from what the server actually answers', async () 
   const response = await fetch(`${base}/api/login`, buildLoginRequest('demo@example.com', 'demo1234'));
 
   assert.match(readToken(await response.json()), /^[0-9a-f]{48}$/);
+});
+
+test('requestLogin returns the token issued by the server for valid credentials', async () => {
+  const result = await requestLogin(' demo@example.com ', 'demo1234', serverFetch);
+
+  assert.match(result.token, /^[0-9a-f]{48}$/);
+});
+
+test('requestLogin shows the wrong-credentials message when the server refuses the password', async () => {
+  assert.deepEqual(await requestLogin('demo@example.com', 'wrong', serverFetch), { error: ERROR_MESSAGE });
 });
 
 test('requestLogin resolves to the token on success', async () => {
