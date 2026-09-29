@@ -1,4 +1,4 @@
-import { ERROR_MESSAGE, requestToken } from './login-client.js';
+import { requestLogin } from './login-client.js';
 
 const form = document.querySelector('#login-form');
 const button = document.querySelector('#login-button');
@@ -14,16 +14,17 @@ async function onLoginPress(event) {
   spinner.hidden = false;
   error.hidden = true;
 
-  const token = await requestToken(email, password);
-  if (!token) {
-    error.textContent = ERROR_MESSAGE;
+  const result = await requestLogin(email, password);
+
+  if (result.error) {
+    error.textContent = result.error;
     error.hidden = false;
     button.disabled = false;
     spinner.hidden = true;
     return;
   }
 
-  sessionStorage.setItem('token', token);
+  sessionStorage.setItem('token', result.token);
   window.location.href = '/home.html';
 }
 

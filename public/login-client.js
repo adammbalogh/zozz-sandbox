@@ -1,6 +1,7 @@
 // Helpers of the login page that do not touch the DOM, so they can be tested in Node.
 
 export const ERROR_MESSAGE = 'Hibás e-mail cím vagy jelszó';
+export const FAILURE_MESSAGE = 'A belépés most nem sikerült, próbáld újra később.';
 
 export function buildLoginRequest(email, password) {
   return {
@@ -10,25 +11,25 @@ export function buildLoginRequest(email, password) {
   };
 }
 
-/** The session token from a successful /api/login response body ({ token, user }). */
+/** The session token from a successful /api/login response body, or '' if it has none. */
 export function readToken(body) {
-  return body?.token;
+  return typeof body?.token === 'string' ? body.token : '';
 }
 
 /**
- * Posts the credentials to /api/login.
- * Resolves to the session token, or null if the login failed for any reason
- * (wrong credentials, network error, unexpected response); it never rejects.
+ * Sends the login request and never throws.
+ * Resolves to { token } on success, or { error } with the message to show.
  */
-export async function requestToken(email, password, fetchImpl = fetch) {
+export async function requestLogin(email, password, fetchFn = globalThis.fetch) {
   try {
-    const response = await fetchImpl('/api/login', buildLoginRequest(email, password));
-    if (!response.ok) {
-      return null;
+    const response = await fetchFn('/api/login', buildLoginRequest(email, password));
+    if (response.status === 401) {
+      return { error: ERROR_MESSAGE };
     }
+    const token = response.ok ? readToken(await response.json()) : '';
 
-    return readToken(await response.json()) || null;
+    return token ? { token } : { error: FAILURE_MESSAGE };
   } catch {
-    return null;
+    return { error: FAILURE_MESSAGE };
   }
 }

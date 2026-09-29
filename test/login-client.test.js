@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../server.js';
-import { readToken, requestToken } from '../public/login-client.js';
+import { ERROR_MESSAGE, FAILURE_MESSAGE, buildLoginRequest, readToken, requestLogin } from '../public/login-client.js';
 
 let server;
 let base;
@@ -17,28 +17,58 @@ after(() => server.close());
 // The page calls fetch with a relative URL; in Node it has to be made absolute.
 const serverFetch = (path, init) => fetch(`${base}${path}`, init);
 
-test('readToken reads the token from the /api/login response body', () => {
-  assert.equal(readToken({ token: 'abc', user: { email: 'demo@example.com' } }), 'abc');
-  assert.equal(readToken({ error: 'invalid_credentials' }), undefined);
-  assert.equal(readToken(undefined), undefined);
+function fakeFetch(status, body) {
+  return async () => ({
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => (typeof body === 'string' ? JSON.parse(body) : body),
+  });
+}
+
+test('readToken reads the token of the real /api/login response shape', () => {
+  assert.equal(readToken({ token: 'abc123', user: { email: 'demo@example.com' } }), 'abc123');
 });
 
-test('requestToken returns the token issued by the server for valid credentials', async () => {
-  assert.match(await requestToken(' demo@example.com ', 'demo1234', serverFetch), /^[0-9a-f]{48}$/);
+test('readToken returns an empty token for an error body instead of throwing', () => {
+  assert.equal(readToken({ error: 'invalid_credentials' }), '');
+  assert.equal(readToken(null), '');
 });
 
-test('requestToken returns null for a wrong password', async () => {
-  assert.equal(await requestToken('demo@example.com', 'wrong', serverFetch), null);
+test('the client reads a token from what the server actually answers', async () => {
+  const response = await fetch(`${base}/api/login`, buildLoginRequest('demo@example.com', 'demo1234'));
+
+  assert.match(readToken(await response.json()), /^[0-9a-f]{48}$/);
 });
 
-test('requestToken returns null instead of rejecting on a network error or a broken response', async () => {
+test('requestLogin returns the token issued by the server for valid credentials', async () => {
+  const result = await requestLogin(' demo@example.com ', 'demo1234', serverFetch);
+
+  assert.match(result.token, /^[0-9a-f]{48}$/);
+});
+
+test('requestLogin shows the wrong-credentials message when the server refuses the password', async () => {
+  assert.deepEqual(await requestLogin('demo@example.com', 'wrong', serverFetch), { error: ERROR_MESSAGE });
+});
+
+test('requestLogin resolves to the token on success', async () => {
+  const result = await requestLogin('demo@example.com', 'demo1234', fakeFetch(200, { token: 'abc123', user: {} }));
+
+  assert.deepEqual(result, { token: 'abc123' });
+});
+
+test('requestLogin shows the wrong-credentials message on 401', async () => {
+  const result = await requestLogin('demo@example.com', 'x', fakeFetch(401, { error: 'invalid_credentials' }));
+
+  assert.deepEqual(result, { error: ERROR_MESSAGE });
+});
+
+test('requestLogin shows the general message on network, server and parse errors', async () => {
   const offline = async () => {
     throw new TypeError('Failed to fetch');
   };
-  const notJson = async () => new Response('<html>', { status: 200 });
-  const noToken = async () => Response.json({});
 
-  assert.equal(await requestToken('demo@example.com', 'demo1234', offline), null);
-  assert.equal(await requestToken('demo@example.com', 'demo1234', notJson), null);
-  assert.equal(await requestToken('demo@example.com', 'demo1234', noToken), null);
+  assert.deepEqual(await requestLogin('a', 'b', offline), { error: FAILURE_MESSAGE });
+  assert.deepEqual(await requestLogin('a', 'b', fakeFetch(500, { error: 'boom' })), { error: FAILURE_MESSAGE });
+  assert.deepEqual(await requestLogin('a', 'b', fakeFetch(200, '<html>')), { error: FAILURE_MESSAGE });
+  assert.deepEqual(await requestLogin('a', 'b', fakeFetch(200, {})), { error: FAILURE_MESSAGE });
 });
