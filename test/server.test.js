@@ -38,19 +38,12 @@ test('serves the login page and refuses paths outside public/', async () => {
   assert.equal((await fetch(`${base}/..%2Fserver.js`)).status, 403);
 });
 
-test('the login page offers a forgot-password hint with the support address under the password field', async () => {
+test('the login page has a placeholder forgot-password link under the password field', async () => {
   const html = await (await fetch(`${base}/`)).text();
   const passwordAt = html.indexOf('name="password"');
-  const hintAt = html.indexOf('<summary>Elfelejtett jelszó?</summary>');
+  const linkAt = html.indexOf('<a id="forgot-password" href="#">Elfelejtett jelszó?</a>');
   const buttonAt = html.indexOf('id="login-button"');
 
-  assert.ok(passwordAt < hintAt && hintAt < buttonAt, 'the hint sits between the password field and the login button');
-  assert.match(html, /<details id="forgot-password">/, 'the hint is closed by default');
-  assert.match(html, /írjon a <a [^>]*>support@example\.com<\/a> címre arról az e-mail címről, amellyel belép\./);
-
-  const href = html.match(/href="(mailto:[^"]+)"/)?.[1];
-  assert.ok(href, 'the address opens the mail client');
-  const mailto = new URL(href);
-  assert.equal(mailto.pathname, 'support@example.com');
-  assert.equal(mailto.searchParams.get('subject'), 'Elfelejtett jelszó');
+  assert.ok(passwordAt < linkAt && linkAt < buttonAt, 'the link sits between the password field and the login button');
+  assert.doesNotMatch(html, /<details id="forgot-password">/);
 });
