@@ -28,3 +28,5 @@ async function onLoginPress(event) {
 }
 
 form.addEventListener('submit', onLoginPress);
+
+document.getElementById('forgot-password').addEventListener('click', (event) => event.preventDefault());
