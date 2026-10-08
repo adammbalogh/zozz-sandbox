@@ -5,7 +5,21 @@ import { fileURLToPath } from 'node:url';
 import { checkCredentials, issueToken } from './src/auth.js';
 
 const PUBLIC_DIR = fileURLToPath(new URL('./public/', import.meta.url));
+const VERSION = await readVersion();
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
+
+async function readVersion() {
+  try {
+    const pkg = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'));
+    return typeof pkg.version === 'string' ? pkg.version : null;
+  } catch {
+    return null;
+  }
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
 
 function sendJson(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -50,7 +64,11 @@ async function serveStatic(req, res) {
     return;
   }
   try {
-    const content = await readFile(file);
+    let content = await readFile(file);
+    if (file === join(PUBLIC_DIR, 'index.html')) {
+      const suffix = VERSION ? ` · v${escapeHtml(VERSION)}` : '';
+      content = content.toString().replace('{{version-suffix}}', () => suffix);
+    }
     res.writeHead(200, { 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream' });
     res.end(content);
   } catch {

@@ -11,3 +11,4 @@ button:disabled { opacity: .6; }
 #forgot-password summary::-webkit-details-marker { display: none; }
 #forgot-password p { margin: .5rem 0 0; }
 #forgot-password a { color: #0066cc; }
+#app-footer { text-align: center; font-size: .75rem; color: #8e8e93; margin-bottom: 2rem; }

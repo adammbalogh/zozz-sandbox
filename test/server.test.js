@@ -1,4 +1,5 @@
 import { test, before, after } from 'node:test';
+import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { createApp } from '../server.js';
 
@@ -53,4 +54,12 @@ test('the login page offers a forgot-password hint with the support address unde
   const mailto = new URL(href);
   assert.equal(mailto.pathname, 'support@example.com');
   assert.equal(mailto.searchParams.get('subject'), 'Elfelejtett jelszó');
+});
+
+test('GET / shows the package.json version in the footer', async () => {
+  const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  const html = await (await fetch(`${base}/`)).text();
+
+  assert.match(html, new RegExp(`<footer id="app-footer">Login demo · v${version.replaceAll('.', '\\.')}</footer>`));
+  assert.ok(!html.includes('{{'));
 });
