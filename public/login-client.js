@@ -10,6 +10,10 @@ export function buildLoginRequest(email, password) {
   };
 }
 
+export function passwordInputType(show) {
+  return show ? 'text' : 'password';
+}
+
 /** The session token from a successful /api/login response body ({ token, user }). */
 export function readToken(body) {
   return body?.token;
