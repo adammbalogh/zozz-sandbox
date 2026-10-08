@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../server.js';
-import { readToken, requestToken } from '../public/login-client.js';
+import { passwordInputType, readToken, requestToken } from '../public/login-client.js';
 
 let server;
 let base;
@@ -41,4 +41,9 @@ test('requestToken returns null instead of rejecting on a network error or a bro
   assert.equal(await requestToken('demo@example.com', 'demo1234', offline), null);
   assert.equal(await requestToken('demo@example.com', 'demo1234', notJson), null);
   assert.equal(await requestToken('demo@example.com', 'demo1234', noToken), null);
+});
+
+test('passwordInputType shows the password as text only when asked to', () => {
+  assert.equal(passwordInputType(true), 'text');
+  assert.equal(passwordInputType(false), 'password');
 });

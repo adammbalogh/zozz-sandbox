@@ -1,4 +1,4 @@
-import { ERROR_MESSAGE, requestToken } from './login-client.js';
+import { ERROR_MESSAGE, passwordInputType, requestToken } from './login-client.js';
 
 const form = document.querySelector('#login-form');
 const button = document.querySelector('#login-button');
@@ -28,3 +28,6 @@ async function onLoginPress(event) {
 }
 
 form.addEventListener('submit', onLoginPress);
+document.querySelector('#show-password').addEventListener('change', (event) => {
+  form.elements.password.type = passwordInputType(event.target.checked);
+});
